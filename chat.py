@@ -18,7 +18,7 @@ class ChatService(object):
     Users.remove(socket)
 
   def receve(self, socket, data):
-    user = Users.get(socket)
+    user = Users.find_by_socket(socket)
     UserHandler.handle(user, data)
 
 class LoginHandler(object):
@@ -36,6 +36,7 @@ class LoginHandler(object):
     if not self._check_name(name):
       self.enter()
       return
+    self._user.name = name
     self._user.send(Message(name, 'Yellow').add(' は有効な名前です'))
 
   def _check_name(self, name):
@@ -45,7 +46,9 @@ class LoginHandler(object):
     if len(name) > self.NAME_MAX_LENGTH:
       self._user.send(Message('16文字(byte)以上の名前は使用できません。', 'maroon'))
       return False
-    # TODO 既に使用されているかチェック
+    if Users.find_by_name(name):
+      self._user.send(Message('既にその名前は使用されています。', 'maroon'))
+      return False
     return True
 
   def use_invalidate_character(self, name):
@@ -84,8 +87,14 @@ class Users(object):
     cls._users[socket] = user
 
   @classmethod
-  def get(cls, socket):
+  def find_by_socket(cls, socket):
     return cls._users[socket]
+
+  @classmethod
+  def find_by_name(cls, name):
+    matchs = [user for user in cls._users.values() if user.name == name]
+    if not matchs: return None
+    return matchs[0]
 
   @classmethod
   def remove(cls, socket):
@@ -98,6 +107,7 @@ class Users(object):
 
 class User(object):
   def __init__(self, socket):
+    self.name = ""
     self._socket = socket
 
   def send(self, message):
