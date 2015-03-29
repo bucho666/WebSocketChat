@@ -5,7 +5,7 @@ from room import Room
 from room import RoomDB
 from server import WebSocketServer
 
-# TODO 色選択
+# TODO 名前に色を設定
 # TODO 発言の最後に時刻を表示
 # TODO バックログを保存、ログインした際に送信する。
 class ChatService(object):
@@ -25,6 +25,7 @@ class ChatService(object):
 
   def receve(self, socket, data):
     user = UserDB.find_by_socket(socket)
+    user.send(Message('> ' + data, 'yellow'))
     UserHandlers.handle(user, data)
 
 class LoginHandler(object):
@@ -35,7 +36,7 @@ class LoginHandler(object):
     self._user = user
 
   def enter(self):
-    self._user.send(Message("名前を入力してください:", 'yellow'));
+    self._user.send(Message("名前を入力してください:", 'olive'));
 
   def handle(self, message):
     name = message
@@ -43,7 +44,7 @@ class LoginHandler(object):
       self.enter()
       return
     self._user.name = name
-    UserHandlers.set_handler(self._user, ChatHandler(self._user))
+    UserHandlers.set_handler(self._user, ChoiceColorHandler(self._user))
 
   def leave(self):
     pass
@@ -65,13 +66,42 @@ class LoginHandler(object):
       if ch in self.INVALID_NAME_CHARACTER: return True
     return False
 
+class ChoiceColorHandler(object):
+  _colors = (
+      'red', 'maroon',
+      'yellow', 'olive',
+      'lime', 'green',
+      'aqua', 'teal',
+      'blue', 'navy',
+      'fuchsia', 'purple')
+
+  def __init__(self, user):
+    self._user = user
+
+  def enter(self):
+    self._user.send(Message("名前の色を選択してください:", 'olive'));
+    for color in self._colors:
+      self._user.send(Message(': %s' % color, color)) # TODO 改行処理
+
+  def leave(self):
+    pass
+
+  def handle(self, message):
+    choose_color = message.lower()
+    if not choose_color in self._colors:
+      self._user.send(Message('リストの中の色を入力してください。', 'maroon'))
+      self.enter()
+      return
+    self._user.send('OK')
+    UserHandlers.set_handler(self._user, ChatHandler(self._user))
+
 class ChatHandler(object):
   def __init__(self, user):
     self._user = user
     self._room = RoomDB.find_by_id(0)
 
   def enter(self):
-    self._room.send_all(Message(self._user.name, "green").add(' が入室しました。', 'yellow'))
+    self._room.send_all(Message(self._user.name, "green").add(' が入室しました。', 'olive'))
     self._user.send(Message('ログインしました。'))
     self._room.add_user(self._user)
 
