@@ -99,7 +99,10 @@ class WebSocketServer(object):
 
   def run(self, port):
     self._listen(port)
-    while True: self._process()
+    try:
+      while True: self._process()
+    except KeyboardInterrupt:
+      pass
 
   def _listen(self, port):
     self._accept_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

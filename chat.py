@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from user import User
+from user import UserDB
+from room import Room
+from room import RoomDB
 from server import WebSocketServer
 
 # TODO 色選択
@@ -78,36 +82,6 @@ class ChatHandler(object):
   def handle(self, message):
     self._room.send_all(Message(self._user.name + ": ", 'olive').add(message))
 
-class RoomDB(object):
-  _rooms = dict()
-
-  @classmethod
-  def add(cls, room):
-    cls._rooms[room.object_id()] = room
-
-  @classmethod
-  def find_by_id(cls, room_id):
-    return cls._rooms[room_id]
-
-class Room(object):
-  def __init__(self, object_id=0):
-    self._object_id = object_id
-    self._users = []
-
-  def object_id(self):
-    return self._object_id
-
-
-  def add_user(self, user):
-    self._users.append(user)
-
-  def remove_user(self, user):
-    self._users.remove(user)
-
-  def send_all(self, message):
-    for user in self._users:
-      user.send(message)
-
 class UserHandlers(object):
   _handler = dict()
 
@@ -127,35 +101,6 @@ class UserHandlers(object):
   @classmethod
   def handle(cls, user, data):
     cls._handler[user].handle(data)
-
-class UserDB(object):
-  _users = dict()
-
-  @classmethod
-  def add(cls, socket, user):
-    cls._users[socket] = user
-
-  @classmethod
-  def find_by_socket(cls, socket):
-    return cls._users[socket]
-
-  @classmethod
-  def find_by_name(cls, name):
-    matchs = [user for user in cls._users.values() if user.name == name]
-    if not matchs: return None
-    return matchs[0]
-
-  @classmethod
-  def remove_by_socket(cls, socket):
-    del cls._users[socket]
-
-class User(object):
-  def __init__(self, socket):
-    self.name = ""
-    self._socket = socket
-
-  def send(self, message):
-    self._socket.send(str(message))
 
 class Message(object):
   def __init__(self, message, color='Silver'):
