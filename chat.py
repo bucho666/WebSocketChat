@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 from server import WebSocketServer
 
+# TODO 色選択
 # TODO 発言の最後に時刻を表示
 # TODO バックログを保存、ログインした際に送信する。
 class ChatService(object):
+  def __init__(self):
+    RoomDB.add(Room(0))
+
   def enter(self, socket):
     new_user = User(socket)
     UserDB.add(socket, new_user)
@@ -58,18 +62,51 @@ class LoginHandler(object):
     return False
 
 class ChatHandler(object):
-  # TODO ユーザリストを作成、発言はそのユーザリストだけに送信
   def __init__(self, user):
     self._user = user
+    self._room = RoomDB.find_by_id(0)
 
   def enter(self):
-    UserDB.send_all(Message(self._user.name, "green").add(' が入室しました。', 'yellow'))
+    self._room.send_all(Message(self._user.name, "green").add(' が入室しました。', 'yellow'))
+    self._user.send(Message('ログインしました。'))
+    self._room.add_user(self._user)
 
   def leave(self):
-    UserDB.send_all(Message(self._user.name, "green").add(' が退室しました。', 'olive'))
+    self._room.remove_user(self._user)
+    self._room.send_all(Message(self._user.name, "green").add(' が退室しました。', 'olive'))
 
   def handle(self, message):
-    UserDB.send_all(Message(self._user.name + ": " + message))
+    self._room.send_all(Message(self._user.name + ": ", 'olive').add(message))
+
+class RoomDB(object):
+  _rooms = dict()
+
+  @classmethod
+  def add(cls, room):
+    cls._rooms[room.object_id()] = room
+
+  @classmethod
+  def find_by_id(cls, room_id):
+    return cls._rooms[room_id]
+
+class Room(object):
+  def __init__(self, object_id=0):
+    self._object_id = object_id
+    self._users = []
+
+  def object_id(self):
+    return self._object_id
+
+
+  def add_user(self, user):
+    self._users.append(user)
+
+  def remove_user(self, user):
+    self._users.remove(user)
+
+  def send_all(self, message):
+    for user in self._users:
+      user.send(message)
 
 class UserHandlers(object):
   _handler = dict()
@@ -111,11 +148,6 @@ class UserDB(object):
   @classmethod
   def remove_by_socket(cls, socket):
     del cls._users[socket]
-
-  @classmethod
-  def send_all(cls, message):
-    for user in cls._users.values():
-      user.send(message)
 
 class User(object):
   def __init__(self, socket):
