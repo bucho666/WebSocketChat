@@ -1,36 +1,108 @@
 # -*- coding: utf-8 -*-
 from server import WebSocketServer
 
+
+# 文字の色を選べるようにする。
+# 発言の最後に時刻を表示
+# バックログを保存、ログインした際に送信する。
+class ChatService(object):
+  def login(self, socket):
+    new_user = User(socket)
+    Users.add(socket, new_user)
+    UserHandler.set_handler(new_user, LoginHandler(new_user))
+    UserHandler.enter(new_user)
+
+  def logout(self, socket):
+    user = Users(socket)
+    UserHandler.logout(user)
+    UserHandler.delete(user)
+    Users.remove(socket)
+
+  def receve(self, socket, data):
+    user = Users.get(socket)
+    UserHandler.handle(user, data)
+
+class LoginHandler(object):
+  INVALID_NAME_CHARACTER = u' 　!"#$%&\'()-=^~\\|@`[{;+:*]},<.>/?_'
+  NAME_MAX_LENGTH = 16
+
+  def __init__(self, user):
+    self._user = user
+
+  def enter(self):
+    self._user.send("名前を入力してください:", 'yellow');
+
+  def handle(self, message):
+    name = message
+    if not self._check_name(name):
+      self.enter()
+      return
+    self._user.send('%s は有効名前です' % name)
+
+  def _check_name(self, name):
+    if self.use_invalidate_character(name):
+      self._user.send('名前に記号や空白は使用できません。', 'maroon')
+      return False
+    if len(name) > self.NAME_MAX_LENGTH:
+      self._user.send('16文字(byte)以上の名前は使用できません。', 'maroon')
+      return False
+    # TODO 既に使用されているかチェック
+    return True
+
+  def use_invalidate_character(self, name):
+    for ch in unicode(name, "UTF-8"):
+      if ch in self.INVALID_NAME_CHARACTER: return True
+    return False
+
+class UserHandler(object):
+  _handler = dict()
+
+  @classmethod
+  def set_handler(cls, user, handler):
+    cls._handler[user] = handler
+
+  @classmethod
+  def delete(cls, user):
+    del cls._handler[user]
+
+  @classmethod
+  def enter(cls, user):
+    cls._handler[user].enter()
+
+  @classmethod
+  def logout(cls, user):
+    cls._handler[user].logout()
+
+  @classmethod
+  def handle(cls, user, data):
+    cls._handler[user].handle(data)
+
+class Users(object):
+  _users = dict()
+
+  @classmethod
+  def add(cls, socket, user):
+    cls._users[socket] = user
+
+  @classmethod
+  def get(cls, socket):
+    return cls._users[socket]
+
+  @classmethod
+  def remove(cls, socket):
+    del cls._users[socket]
+
+  @classmethod
+  def send_all(cls, message):
+    for user in cls._users.values():
+      user.send(message)
+
 class User(object):
   def __init__(self, socket):
     self._socket = socket
 
-class Users(object):
-  def __init__(self):
-    self._users = dict()
-
-  def add(self, socket, user):
-    self._users[socket] = user
-
-  def remove(self, socket):
-    del self._users[socket]
-
-  def send_all(self, message):
-    for socket in self._users.keys():
-      socket.send(message)
-
-class ChatService(object):
-  def __init__(self):
-    self._users = Users()
-
-  def login(self, socket):
-    self._users.add(socket, User(socket))
-
-  def logout(self, socket):
-    self._users.remove(socket)
-
-  def receve(self, socket, data):
-    self._users.send_all(data)
+  def send(self, message, color='Silver'):
+    self._socket.send('<p style="color:%s">%s</p>' % (color, message))
 
 if __name__ == '__main__':
   WebSocketServer(ChatService()).run(7000)
