@@ -4,19 +4,19 @@ from server import WebSocketServer
 # TODO 発言の最後に時刻を表示
 # TODO バックログを保存、ログインした際に送信する。
 class ChatService(object):
-  def login(self, socket):
+  def enter(self, socket):
     new_user = User(socket)
-    Users.add(socket, new_user)
+    UserDB.add(socket, new_user)
     UserHandlers.set_handler(new_user, LoginHandler(new_user))
 
-  def logout(self, socket):
-    user = Users.find_by_socket(socket)
-    UserHandlers.logout(user)
+  def leave(self, socket):
+    user = UserDB.find_by_socket(socket)
+    UserHandlers.leave(user)
     UserHandlers.delete(user)
-    Users.remove_by_socket(socket)
+    UserDB.remove_by_socket(socket)
 
   def receve(self, socket, data):
-    user = Users.find_by_socket(socket)
+    user = UserDB.find_by_socket(socket)
     UserHandlers.handle(user, data)
 
 class LoginHandler(object):
@@ -37,7 +37,7 @@ class LoginHandler(object):
     self._user.name = name
     UserHandlers.set_handler(self._user, ChatHandler(self._user))
 
-  def logout(self):
+  def leave(self):
     pass
 
   def _check_name(self, name):
@@ -47,7 +47,7 @@ class LoginHandler(object):
     if len(name) > self.NAME_MAX_LENGTH:
       self._user.send(Message('16文字(byte)以上の名前は使用できません。', 'maroon'))
       return False
-    if Users.find_by_name(name):
+    if UserDB.find_by_name(name):
       self._user.send(Message('既にその名前は使用されています。', 'maroon'))
       return False
     return True
@@ -58,18 +58,18 @@ class LoginHandler(object):
     return False
 
 class ChatHandler(object):
-  # TODO ユーザリストを作成、発言はそのユーザリストだけに送信(Usersクラス見直し
+  # TODO ユーザリストを作成、発言はそのユーザリストだけに送信
   def __init__(self, user):
     self._user = user
 
   def enter(self):
-    Users.send_all(Message(self._user.name, "green").add(' が入室しました。', 'yellow'))
+    UserDB.send_all(Message(self._user.name, "green").add(' が入室しました。', 'yellow'))
 
-  def logout(self):
-    Users.send_all(Message(self._user.name, "green").add(' が退室しました。', 'olive'))
+  def leave(self):
+    UserDB.send_all(Message(self._user.name, "green").add(' が退室しました。', 'olive'))
 
   def handle(self, message):
-    Users.send_all(Message(self._user.name + ": " + message))
+    UserDB.send_all(Message(self._user.name + ": " + message))
 
 class UserHandlers(object):
   _handler = dict()
@@ -84,14 +84,14 @@ class UserHandlers(object):
     del cls._handler[user]
 
   @classmethod
-  def logout(cls, user):
-    cls._handler[user].logout()
+  def leave(cls, user):
+    cls._handler[user].leave()
 
   @classmethod
   def handle(cls, user, data):
     cls._handler[user].handle(data)
 
-class Users(object):
+class UserDB(object):
   _users = dict()
 
   @classmethod

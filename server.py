@@ -121,7 +121,7 @@ class WebSocketServer(object):
     if not client.handshake(): return
     self._socket_list.add(conn)
     self._clients[conn] = client
-    self._service.login(client)
+    self._service.enter(client)
 
   def _read_client(self, sock):
     client = self._clients[sock]
@@ -134,6 +134,6 @@ class WebSocketServer(object):
     self._service.receve(client, data)
 
   def _disconnect(self, sock):
-    self._service.logout(self._clients[sock])
+    self._service.leave(self._clients[sock])
     self._socket_list.remove(sock)
     del self._clients[sock]
