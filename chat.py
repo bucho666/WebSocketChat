@@ -1,25 +1,23 @@
 # -*- coding: utf-8 -*-
 from server import WebSocketServer
 
-# TODO チャットハンドラ作成
 # TODO 発言の最後に時刻を表示
 # TODO バックログを保存、ログインした際に送信する。
 class ChatService(object):
   def login(self, socket):
     new_user = User(socket)
     Users.add(socket, new_user)
-    UserHandler.set_handler(new_user, LoginHandler(new_user))
-    UserHandler.enter(new_user)
+    UserHandlers.set_handler(new_user, LoginHandler(new_user))
 
   def logout(self, socket):
-    user = Users(socket)
-    UserHandler.logout(user)
-    UserHandler.delete(user)
-    Users.remove(socket)
+    user = Users.find_by_socket(socket)
+    UserHandlers.logout(user)
+    UserHandlers.delete(user)
+    Users.remove_by_socket(socket)
 
   def receve(self, socket, data):
     user = Users.find_by_socket(socket)
-    UserHandler.handle(user, data)
+    UserHandlers.handle(user, data)
 
 class LoginHandler(object):
   INVALID_NAME_CHARACTER = u' 　!"#$%&\'()-=^~\\|@`[{;+:*]},<.>/?_'
@@ -37,7 +35,10 @@ class LoginHandler(object):
       self.enter()
       return
     self._user.name = name
-    self._user.send(Message(name, 'Yellow').add(' は有効な名前です'))
+    UserHandlers.set_handler(self._user, ChatHandler(self._user))
+
+  def logout(self):
+    pass
 
   def _check_name(self, name):
     if self.use_invalidate_character(name):
@@ -52,24 +53,35 @@ class LoginHandler(object):
     return True
 
   def use_invalidate_character(self, name):
-    for ch in unicode(name, "UTF-8"):
+    for ch in unicode(name, 'UTF-8'):
       if ch in self.INVALID_NAME_CHARACTER: return True
     return False
 
-class UserHandler(object):
+class ChatHandler(object):
+  # TODO ユーザリストを作成、発言はそのユーザリストだけに送信(Usersクラス見直し
+  def __init__(self, user):
+    self._user = user
+
+  def enter(self):
+    Users.send_all(Message(self._user.name, "green").add(' が入室しました。', 'yellow'))
+
+  def logout(self):
+    Users.send_all(Message(self._user.name, "green").add(' が退室しました。', 'olive'))
+
+  def handle(self, message):
+    Users.send_all(Message(self._user.name + ": " + message))
+
+class UserHandlers(object):
   _handler = dict()
 
   @classmethod
   def set_handler(cls, user, handler):
     cls._handler[user] = handler
+    cls._handler[user].enter()
 
   @classmethod
   def delete(cls, user):
     del cls._handler[user]
-
-  @classmethod
-  def enter(cls, user):
-    cls._handler[user].enter()
 
   @classmethod
   def logout(cls, user):
@@ -97,7 +109,7 @@ class Users(object):
     return matchs[0]
 
   @classmethod
-  def remove(cls, socket):
+  def remove_by_socket(cls, socket):
     del cls._users[socket]
 
   @classmethod
