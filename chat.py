@@ -30,21 +30,21 @@ class LoginHandler(object):
     self._user = user
 
   def enter(self):
-    self._user.send("名前を入力してください:", 'yellow');
+    self._user.send(Message("名前を入力してください:", 'yellow'));
 
   def handle(self, message):
     name = message
     if not self._check_name(name):
       self.enter()
       return
-    self._user.send('%s は有効名前です' % name)
+    self._user.send(Message(name, 'Yellow').add(' は有効な名前です'))
 
   def _check_name(self, name):
     if self.use_invalidate_character(name):
-      self._user.send('名前に記号や空白は使用できません。', 'maroon')
+      self._user.send(Message('名前に記号や空白は使用できません。', 'maroon'))
       return False
     if len(name) > self.NAME_MAX_LENGTH:
-      self._user.send('16文字(byte)以上の名前は使用できません。', 'maroon')
+      self._user.send(Message('16文字(byte)以上の名前は使用できません。', 'maroon'))
       return False
     # TODO 既に使用されているかチェック
     return True
@@ -101,8 +101,20 @@ class User(object):
   def __init__(self, socket):
     self._socket = socket
 
-  def send(self, message, color='Silver'):
-    self._socket.send('<p style="color:%s">%s</p>' % (color, message))
+  def send(self, message):
+    self._socket.send(str(message))
+
+class Message(object):
+  def __init__(self, message, color='Silver'):
+    self._messages = [(message, color)]
+
+  def add(self, message, color='Silver'):
+    self._messages.append((message, color))
+    return self
+
+  def __str__(self):
+    return ''.join(['<font color=%s>%s</font>' % (color, message)\
+        for (message, color) in self._messages])
 
 if __name__ == '__main__':
   WebSocketServer(ChatService()).run(7000)
