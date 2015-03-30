@@ -22,10 +22,21 @@ class UserDB(object):
   def remove_by_socket(cls, socket):
     del cls._users[socket]
 
+  @classmethod
+  def flush_send_buffer(cls):
+    for user in cls._users.values():
+        user.flush()
+
 class User(object):
   def __init__(self, socket):
-    self.name = ""
+    self.name = ''
     self._socket = socket
+    self._buffer = []
 
   def send(self, message):
-    self._socket.send(str(message))
+    self._buffer.append(str(message))
+
+  def flush(self):
+    if not self._buffer: return
+    self._socket.send(''.join(self._buffer))
+    self._buffer = []

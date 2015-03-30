@@ -16,17 +16,20 @@ class ChatService(object):
     new_user = User(socket)
     UserDB.add(socket, new_user)
     UserHandlers.set_handler(new_user, LoginHandler(new_user))
+    UserDB.flush_send_buffer()
 
   def leave(self, socket):
     user = UserDB.find_by_socket(socket)
     UserHandlers.leave(user)
     UserHandlers.delete(user)
     UserDB.remove_by_socket(socket)
+    UserDB.flush_send_buffer()
 
   def receve(self, socket, data):
     user = UserDB.find_by_socket(socket)
     user.send(Message(data + '\n', 'yellow'))
     UserHandlers.handle(user, data)
+    UserDB.flush_send_buffer()
 
 class LoginHandler(object):
   INVALID_NAME_CHARACTER = u' 　!"#$%&\'()-=^~\\|@`[{;+:*]},<.>/?_'
