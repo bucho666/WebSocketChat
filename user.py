@@ -30,6 +30,7 @@ class UserDB(object):
 class User(object):
   def __init__(self, socket, prompt):
     self.name = ''
+    self.name_color = 'silver'
     self._prompt = prompt
     self._socket = socket
     self._buffer = []

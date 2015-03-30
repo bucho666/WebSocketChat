@@ -18,7 +18,6 @@ class Message(object):
         for (message, color) in self._messages])
     return string.replace('\n', '<br>')
 
-# TODO 名前に色を設定
 # TODO 発言の最後に時刻を表示
 # TODO バックログを保存、ログインした際に送信する。
 class ChatService(object):
@@ -111,6 +110,7 @@ class ChoiceColorHandler(object):
       self._user.send(Message('リストの中の色を入力してください。\n', 'maroon'))
       self.enter()
       return
+    self._user.name_color = choose_color
     self._user.send('OK\n')
     UserHandlers.set_handler(self._user, ChatHandler(self._user))
 
@@ -129,7 +129,7 @@ class ChatHandler(object):
     self._room.send_all(Message(self._user.name, "green").add(' が退室しました。\n', 'olive'))
 
   def handle(self, message):
-    self._room.send_all(Message(self._user.name + ": ", 'olive').add(message + '\n'))
+    self._room.send_all(Message(self._user.name + ": ", self._user.name_color).add(message + '\n'))
 
 class UserHandlers(object):
   _handler = dict()
