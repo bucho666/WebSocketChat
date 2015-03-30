@@ -5,6 +5,7 @@ from user import UserName
 from room import Room
 from room import RoomDB
 from server import WebSocketServer
+from datetime import datetime
 
 class Message(object):
   def __init__(self, message, color='Silver'):
@@ -126,7 +127,12 @@ class ChatHandler(object):
     self._room.send_all(Message(self._user.name(), self._user.name_color()).add(' が退室しました。\n', 'olive'))
 
   def handle(self, message):
-    self._room.send_all(Message(self._user.name() + ": ", self._user.name_color()).add(message + '\n'))
+    self._room.send_all(Message(self._user.name() + ": ", self._user.name_color())\
+      .add(message)\
+      .add(" <%s>\n" % self._time_stamp(), 'green'))
+
+  def _time_stamp(self):
+    return str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 class UserHandlers(object):
   _handler = dict()
