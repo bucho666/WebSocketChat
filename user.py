@@ -28,8 +28,9 @@ class UserDB(object):
         user.flush()
 
 class User(object):
-  def __init__(self, socket):
+  def __init__(self, socket, prompt):
     self.name = ''
+    self._prompt = prompt
     self._socket = socket
     self._buffer = []
 
@@ -38,5 +39,6 @@ class User(object):
 
   def flush(self):
     if not self._buffer: return
-    self._socket.send(''.join(self._buffer))
+    self.send(self._prompt)
+    self._socket.send('<br>' + ''.join(self._buffer))
     self._buffer = []
