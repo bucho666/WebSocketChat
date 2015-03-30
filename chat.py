@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from user import User
 from user import UserDB
+from user import UserName
 from room import Room
 from room import RoomDB
 from server import WebSocketServer
@@ -65,21 +66,17 @@ class LoginHandler(object):
     pass
 
   def _check_name(self, name):
-    if self.use_invalidate_character(name):
+    user_name = UserName(name)
+    if user_name.using_invalid_character():
       self._user.send(Message('名前に記号や空白は使用できません。\n', 'maroon'))
       return False
-    if len(name) > self.NAME_MAX_LENGTH:
-      self._user.send(Message('16文字(byte)以上の名前は使用できません。\n', 'maroon'))
+    if user_name.is_too_long():
+      self._user.send(Message('%d文字(byte)以上の名前は使用できません。\n' % user_name.max_length(), 'maroon'))
       return False
     if UserDB.find_by_name(name):
       self._user.send(Message('既にその名前は使用されています。\n', 'maroon'))
       return False
     return True
-
-  def use_invalidate_character(self, name):
-    for ch in unicode(name, 'UTF-8'):
-      if ch in self.INVALID_NAME_CHARACTER: return True
-    return False
 
 class ChoiceColorHandler(object):
   _colors = (

@@ -56,12 +56,26 @@ class User(object):
     self._buffer = []
 
 class UserName(object):
+  _INVALID_NAME_CHARACTER = u' 　!"#$%&\'()-=^~\\|@`[{;+:*]},<.>/?_'
+  _NAME_MAX_LENGTH = 16
+
   def __init__(self, name, color='silver'):
     self._name = name
     self._color = color
 
   def __str__(self):
     return self._name
+
+  def is_too_long(self):
+    return len(self._name) > self._NAME_MAX_LENGTH
+
+  def max_length(self):
+    return self._NAME_MAX_LENGTH
+
+  def using_invalid_character(self):
+    for ch in unicode(self._name, 'UTF-8'):
+      if ch in self._INVALID_NAME_CHARACTER: return True
+    return False
 
   def color(self):
     return self._color
