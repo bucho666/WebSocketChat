@@ -20,7 +20,6 @@ class Message(object):
         for (message, color) in self._messages])
     return string.replace('\n', '<br>')
 
-# TODO バックログを保存、ログインした際に送信する。
 class ChatService(object):
   DEFAULT_PROMPT = Message('> ', 'white')
   def __init__(self):
@@ -117,15 +116,15 @@ class ChatHandler(object):
 
   def enter(self):
     self._user.send(BackLog.read())
-    self._send_all(Message(self._user.name(), self._user.name_color()).add(' が入室しました。', 'olive'))
     self._room.add_user(self._user)
+    self._send_all(Message(self._user.name(), self._user.name_color()).add(' が入室しました。', 'olive'))
 
   def leave(self):
     self._room.remove_user(self._user)
     self._send_all(Message(self._user.name(), self._user.name_color()).add(' が退室しました。', 'olive'))
 
   def handle(self, message):
-    self._send_all(Message(self._user.name() + ": ", self._user.name_color()).add(message))
+    self._send_all(Message(self._user.name() + " > ", self._user.name_color()).add(message))
 
   def _send_all(self, message):
       message.add(" <%s>\n" % self._time_stamp(), 'green')
@@ -136,6 +135,7 @@ class ChatHandler(object):
     return str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 class BackLog(object):
+  _length = 64
   _log = []
 
   @classmethod
@@ -145,6 +145,7 @@ class BackLog(object):
   @classmethod
   def write(cls, message):
     cls._log.append(str(message))
+    cls._log = cls._log[-cls._length:]
 
 class UserHandlers(object):
   _handler = dict()

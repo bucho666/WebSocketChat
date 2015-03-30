@@ -66,7 +66,7 @@ try {
   };
   // 切断処理 
   s.onclose = function (e) {
-    write_log("サーバから切断されました。", "maroon");
+    write_log("<br>サーバから切断されました。", "maroon");
   };
   // メッセージ受信処理
   s.onmessage = function (e) {
@@ -74,10 +74,10 @@ try {
   };
   // 接続エラー処理
   s.onerror = function (e) {
-    write_log("通信エラー。", "maroon");
+    write_log("<br>通信エラー。", "maroon");
   };
 } catch (ex) {
-  console.log("例外エラー。" + ex, "maroon");
+  console.log("<br>例外エラー。" + ex, "maroon");
 }
 // submit処理
 form.addEventListener("submit", function (e) {
