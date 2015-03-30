@@ -14,7 +14,7 @@ class UserDB(object):
 
   @classmethod
   def find_by_name(cls, name):
-    matchs = [user for user in cls._users.values() if user.name == name]
+    matchs = [user for user in cls._users.values() if user.name() == name]
     if not matchs: return None
     return matchs[0]
 
