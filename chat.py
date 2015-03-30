@@ -20,7 +20,6 @@ class Message(object):
         for (message, color) in self._messages])
     return string.replace('\n', '<br>')
 
-# TODO 発言の最後に時刻を表示
 # TODO バックログを保存、ログインした際に送信する。
 class ChatService(object):
   DEFAULT_PROMPT = Message('> ', 'white')
@@ -117,8 +116,8 @@ class ChatHandler(object):
     self._room = RoomDB.find_by_id(0)
 
   def enter(self):
+    self._user.send(BackLog.read())
     self._send_all(Message(self._user.name(), self._user.name_color()).add(' が入室しました。', 'olive'))
-    self._user.send(Message('ログインしました。\n'))
     self._room.add_user(self._user)
 
   def leave(self):
@@ -131,9 +130,21 @@ class ChatHandler(object):
   def _send_all(self, message):
       message.add(" <%s>\n" % self._time_stamp(), 'green')
       self._room.send_all(message)
+      BackLog.write(message)
 
   def _time_stamp(self):
     return str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+class BackLog(object):
+  _log = []
+
+  @classmethod
+  def read(cls):
+    return ''.join(cls._log)
+
+  @classmethod
+  def write(cls, message):
+    cls._log.append(str(message))
 
 class UserHandlers(object):
   _handler = dict()
