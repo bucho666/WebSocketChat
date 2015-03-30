@@ -28,7 +28,7 @@ html,body {
   top: 0px;
   bottom: 24px;
   overflow-y: auto;
-  line-height: 10%;
+  line-height: 100%;
 }
 
 #message {
@@ -49,7 +49,7 @@ var output = document.getElementById("output");
 var form = document.getElementById("form");
 function write_log(message, color){
   var message_color = color || "Silver";
-  var p = document.createElement("p");
+  var p = document.createElement("div");
   p.innerHTML = message
   p.style.color = message_color;
   output.appendChild(p);
