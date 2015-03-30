@@ -5,15 +5,29 @@ from room import Room
 from room import RoomDB
 from server import WebSocketServer
 
+class Message(object):
+  def __init__(self, message, color='Silver'):
+    self._messages = [(message, color)]
+
+  def add(self, message, color='Silver'):
+    self._messages.append((message, color))
+    return self
+
+  def __str__(self):
+    string = ''.join(['<font color=%s>%s</font>' % (color, message.replace(' ', '&nbsp;'))\
+        for (message, color) in self._messages])
+    return string.replace('\n', '<br>')
+
 # TODO 名前に色を設定
 # TODO 発言の最後に時刻を表示
 # TODO バックログを保存、ログインした際に送信する。
 class ChatService(object):
+  DEFAULT_PROMPT = Message('> ', 'white')
   def __init__(self):
     RoomDB.add(Room(0))
 
   def enter(self, socket):
-    new_user = User(socket)
+    new_user = User(socket, self.DEFAULT_PROMPT)
     UserDB.add(socket, new_user)
     UserHandlers.set_handler(new_user, LoginHandler(new_user))
     UserDB.flush_send_buffer()
@@ -27,7 +41,6 @@ class ChatService(object):
 
   def receve(self, socket, data):
     user = UserDB.find_by_socket(socket)
-    user.send(Message(data + '\n', 'yellow'))
     UserHandlers.handle(user, data)
     UserDB.flush_send_buffer()
 
@@ -39,7 +52,7 @@ class LoginHandler(object):
     self._user = user
 
   def enter(self):
-    self._user.send(Message("名前を入力してください: ", 'olive'));
+    self._user.send(Message("名前を入力してください\n", 'white'));
 
   def handle(self, message):
     name = message
@@ -82,7 +95,7 @@ class ChoiceColorHandler(object):
     self._user = user
 
   def enter(self):
-    self._user.send(Message("名前の色を選択してください:\n", 'olive'));
+    self._user.send(Message("名前の色を選択してください\n", 'white'));
     for num, color in enumerate(self._colors):
       color_tag = '%s ' % color
       self._user.send(Message(color_tag.ljust(8), color))
@@ -137,19 +150,6 @@ class UserHandlers(object):
   @classmethod
   def handle(cls, user, data):
     cls._handler[user].handle(data)
-
-class Message(object):
-  def __init__(self, message, color='Silver'):
-    self._messages = [(message, color)]
-
-  def add(self, message, color='Silver'):
-    self._messages.append((message, color))
-    return self
-
-  def __str__(self):
-    string = ''.join(['<font color=%s>%s</font>' % (color, message.replace(' ', '&nbsp;'))\
-        for (message, color) in self._messages])
-    return string.replace('\n', '<br>')
 
 if __name__ == '__main__':
   WebSocketServer(ChatService()).run(7000)

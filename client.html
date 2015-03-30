@@ -62,11 +62,11 @@ try {
   var s = new WebSocket(host);
   // 接続開始処理
   s.onopen = function (e) {
-    write_log("サーバとの接続が完了しました。<br>", "green");
+    write_log("サーバとの接続が完了しました。", "green");
   };
   // 切断処理 
   s.onclose = function (e) {
-    write_log("サーバから切断されました。<br>", "maroon");
+    write_log("サーバから切断されました。", "maroon");
   };
   // メッセージ受信処理
   s.onmessage = function (e) {
@@ -74,16 +74,17 @@ try {
   };
   // 接続エラー処理
   s.onerror = function (e) {
-    write_log("通信エラー。<br>", "maroon");
+    write_log("通信エラー。", "maroon");
   };
 } catch (ex) {
-  console.log("例外エラー。<br>" + ex, "maroon");
+  console.log("例外エラー。" + ex, "maroon");
 }
 // submit処理
 form.addEventListener("submit", function (e) {
     e.preventDefault();
     if (!inputBox.value) return;
     s.send(inputBox.value);
+    write_log(inputBox.value, "yellow");
     inputBox.value = "";
     }, false)
 </script>
