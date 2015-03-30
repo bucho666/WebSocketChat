@@ -109,7 +109,6 @@ class ChoiceColorHandler(object):
       self.enter()
       return
     self._user.change_name_color(choose_color)
-    self._user.send('OK\n')
     UserHandlers.set_handler(self._user, ChatHandler(self._user))
 
 class ChatHandler(object):
@@ -118,18 +117,20 @@ class ChatHandler(object):
     self._room = RoomDB.find_by_id(0)
 
   def enter(self):
-    self._room.send_all(Message(self._user.name(), self._user.name_color()).add(' が入室しました。\n', 'olive'))
+    self._send_all(Message(self._user.name(), self._user.name_color()).add(' が入室しました。', 'olive'))
     self._user.send(Message('ログインしました。\n'))
     self._room.add_user(self._user)
 
   def leave(self):
     self._room.remove_user(self._user)
-    self._room.send_all(Message(self._user.name(), self._user.name_color()).add(' が退室しました。\n', 'olive'))
+    self._send_all(Message(self._user.name(), self._user.name_color()).add(' が退室しました。', 'olive'))
 
   def handle(self, message):
-    self._room.send_all(Message(self._user.name() + ": ", self._user.name_color())\
-      .add(message)\
-      .add(" <%s>\n" % self._time_stamp(), 'green'))
+    self._send_all(Message(self._user.name() + ": ", self._user.name_color()).add(message))
+
+  def _send_all(self, message):
+      message.add(" <%s>\n" % self._time_stamp(), 'green')
+      self._room.send_all(message)
 
   def _time_stamp(self):
     return str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
