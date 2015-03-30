@@ -25,7 +25,7 @@ class ChatService(object):
 
   def receve(self, socket, data):
     user = UserDB.find_by_socket(socket)
-    user.send(Message('> ' + data, 'yellow'))
+    user.send(Message(data + '\n', 'yellow'))
     UserHandlers.handle(user, data)
 
 class LoginHandler(object):
@@ -36,7 +36,7 @@ class LoginHandler(object):
     self._user = user
 
   def enter(self):
-    self._user.send(Message("名前を入力してください:", 'olive'));
+    self._user.send(Message("名前を入力してください: ", 'olive'));
 
   def handle(self, message):
     name = message
@@ -51,13 +51,13 @@ class LoginHandler(object):
 
   def _check_name(self, name):
     if self.use_invalidate_character(name):
-      self._user.send(Message('名前に記号や空白は使用できません。', 'maroon'))
+      self._user.send(Message('名前に記号や空白は使用できません。\n', 'maroon'))
       return False
     if len(name) > self.NAME_MAX_LENGTH:
-      self._user.send(Message('16文字(byte)以上の名前は使用できません。', 'maroon'))
+      self._user.send(Message('16文字(byte)以上の名前は使用できません。\n', 'maroon'))
       return False
     if UserDB.find_by_name(name):
-      self._user.send(Message('既にその名前は使用されています。', 'maroon'))
+      self._user.send(Message('既にその名前は使用されています。\n', 'maroon'))
       return False
     return True
 
@@ -79,9 +79,12 @@ class ChoiceColorHandler(object):
     self._user = user
 
   def enter(self):
-    self._user.send(Message("名前の色を選択してください:", 'olive'));
-    for color in self._colors:
-      self._user.send(Message(': %s' % color, color)) # TODO 改行処理
+    self._user.send(Message("名前の色を選択してください:\n", 'olive'));
+    for num, color in enumerate(self._colors):
+      color_tag = '%s ' % color
+      self._user.send(Message(color_tag.ljust(8), color))
+      if num % 4 == 3:
+          self._user.send(Message('\n'))
 
   def leave(self):
     pass
@@ -89,10 +92,10 @@ class ChoiceColorHandler(object):
   def handle(self, message):
     choose_color = message.lower()
     if not choose_color in self._colors:
-      self._user.send(Message('リストの中の色を入力してください。', 'maroon'))
+      self._user.send(Message('リストの中の色を入力してください。\n', 'maroon'))
       self.enter()
       return
-    self._user.send('OK')
+    self._user.send('OK\n')
     UserHandlers.set_handler(self._user, ChatHandler(self._user))
 
 class ChatHandler(object):
@@ -101,16 +104,16 @@ class ChatHandler(object):
     self._room = RoomDB.find_by_id(0)
 
   def enter(self):
-    self._room.send_all(Message(self._user.name, "green").add(' が入室しました。', 'olive'))
-    self._user.send(Message('ログインしました。'))
+    self._room.send_all(Message(self._user.name, "green").add(' が入室しました。\n', 'olive'))
+    self._user.send(Message('ログインしました。\n'))
     self._room.add_user(self._user)
 
   def leave(self):
     self._room.remove_user(self._user)
-    self._room.send_all(Message(self._user.name, "green").add(' が退室しました。', 'olive'))
+    self._room.send_all(Message(self._user.name, "green").add(' が退室しました。\n', 'olive'))
 
   def handle(self, message):
-    self._room.send_all(Message(self._user.name + ": ", 'olive').add(message))
+    self._room.send_all(Message(self._user.name + ": ", 'olive').add(message + '\n'))
 
 class UserHandlers(object):
   _handler = dict()
@@ -141,8 +144,9 @@ class Message(object):
     return self
 
   def __str__(self):
-    return ''.join(['<font color=%s>%s</font>' % (color, message)\
+    string = ''.join(['<font color=%s>%s</font>' % (color, message.replace(' ', '&nbsp;'))\
         for (message, color) in self._messages])
+    return string.replace('\n', '<br>')
 
 if __name__ == '__main__':
   WebSocketServer(ChatService()).run(7000)
