@@ -29,11 +29,22 @@ class UserDB(object):
 
 class User(object):
   def __init__(self, socket, prompt):
-    self.name = ''
-    self.name_color = 'silver'
+    self._name = UserName('', 'silver')
     self._prompt = prompt
     self._socket = socket
     self._buffer = []
+
+  def rename(self, name):
+    self._name = UserName(name, self._name.color())
+
+  def change_name_color(self, new_color):
+    self._name = UserName(str(self._name), new_color)
+
+  def name(self):
+    return str(self._name)
+
+  def name_color(self):
+    return self._name.color()
 
   def send(self, message):
     self._buffer.append(str(message))
@@ -43,3 +54,14 @@ class User(object):
     self.send(self._prompt)
     self._socket.send('<br>' + ''.join(self._buffer))
     self._buffer = []
+
+class UserName(object):
+  def __init__(self, name, color='silver'):
+    self._name = name
+    self._color = color
+
+  def __str__(self):
+    return self._name
+
+  def color(self):
+    return self._color

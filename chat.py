@@ -58,7 +58,7 @@ class LoginHandler(object):
     if not self._check_name(name):
       self.enter()
       return
-    self._user.name = name
+    self._user.rename(name)
     UserHandlers.set_handler(self._user, ChoiceColorHandler(self._user))
 
   def leave(self):
@@ -110,7 +110,7 @@ class ChoiceColorHandler(object):
       self._user.send(Message('リストの中の色を入力してください。\n', 'maroon'))
       self.enter()
       return
-    self._user.name_color = choose_color
+    self._user.change_name_color(choose_color)
     self._user.send('OK\n')
     UserHandlers.set_handler(self._user, ChatHandler(self._user))
 
@@ -120,16 +120,16 @@ class ChatHandler(object):
     self._room = RoomDB.find_by_id(0)
 
   def enter(self):
-    self._room.send_all(Message(self._user.name, "green").add(' が入室しました。\n', 'olive'))
+    self._room.send_all(Message(self._user.name(), self._user.name_color()).add(' が入室しました。\n', 'olive'))
     self._user.send(Message('ログインしました。\n'))
     self._room.add_user(self._user)
 
   def leave(self):
     self._room.remove_user(self._user)
-    self._room.send_all(Message(self._user.name, "green").add(' が退室しました。\n', 'olive'))
+    self._room.send_all(Message(self._user.name(), self._user.name_color()).add(' が退室しました。\n', 'olive'))
 
   def handle(self, message):
-    self._room.send_all(Message(self._user.name + ": ", self._user.name_color).add(message + '\n'))
+    self._room.send_all(Message(self._user.name() + ": ", self._user.name_color()).add(message + '\n'))
 
 class UserHandlers(object):
   _handler = dict()
