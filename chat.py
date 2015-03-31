@@ -124,7 +124,19 @@ class ChatHandler(object):
     self._send_all(Message(self._user.name(), self._user.name_color()).add(' が退室しました。', 'olive'))
 
   def handle(self, message):
-    self._send_all(Message(self._user.name() + " > ", self._user.name_color()).add(message))
+    if message == 'who':
+      self._send_user_list()
+    else:
+      self._send_all(Message(self._user.name(), self._user.name_color()).add(": ").add(message))
+
+  def _send_user_list(self):
+    message = Message("user list:\n", 'white')
+    for num, user in enumerate(self._room.users()):
+      message.add(user.name().ljust(8), user.name_color())
+      if num % 4 == 3:
+        message.add('\n')
+    message.add('\n')
+    self._user.send(message)
 
   def _send_all(self, message):
       message.add(" <%s>\n" % self._time_stamp(), 'green')

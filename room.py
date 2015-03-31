@@ -28,3 +28,6 @@ class Room(object):
   def send_all(self, message):
     for user in self._users:
       user.send(message)
+
+  def users(self):
+    return list(self._users)
