@@ -82,7 +82,6 @@ try {
 // submit処理
 form.addEventListener("submit", function (e) {
     e.preventDefault();
-    if (!inputBox.value) return;
     s.send(inputBox.value);
     write_log(inputBox.value, "yellow");
     inputBox.value = "";

@@ -90,7 +90,7 @@ class WebSocket(object):
 
 class WebSocketServer(object):
   BACKLOG = 5
-  SPECIAL_SEQUENCE = 3
+  DISCONNECT_SEQUENCE = 3
   def __init__(self, service):
     self._accept_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self._socket_list = set()
@@ -129,7 +129,7 @@ class WebSocketServer(object):
   def _read_client(self, sock):
     client = self._clients[sock]
     data = client.recv()
-    if not data or ord(data[0])== self.SPECIAL_SEQUENCE:
+    if data and ord(data[0])== self.DISCONNECT_SEQUENCE:
       self._disconnect(sock)
       return
     self._service.receve(client, data)

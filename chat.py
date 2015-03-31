@@ -40,7 +40,8 @@ class ChatService(object):
 
   def receve(self, socket, data):
     user = UserDB.find_by_socket(socket)
-    UserHandlers.handle(user, data)
+    if data: UserHandlers.handle(user, data)
+    else   : user.send(Message(''))
     UserDB.flush_send_buffer()
 
 class LoginHandler(object):
