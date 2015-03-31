@@ -129,10 +129,8 @@ class WebSocketServer(object):
   def _read_client(self, sock):
     client = self._clients[sock]
     data = client.recv()
-    if not data:
+    if not data or ord(data[0])== self.SPECIAL_SEQUENCE:
       self._disconnect(sock)
-      return
-    if ord(data[0])== self.SPECIAL_SEQUENCE:
       return
     self._service.receve(client, data)
 
