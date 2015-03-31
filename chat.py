@@ -139,6 +139,14 @@ class BackLog(object):
   _log = []
 
   @classmethod
+  def load(cls, filename):
+    cls._log = [line for line in open(filename, 'r')]
+
+  @classmethod
+  def save(cls, filename):
+    open(filename, 'w').writelines(cls._log)
+  
+  @classmethod
   def read(cls):
     return ''.join(cls._log)
 
@@ -168,4 +176,9 @@ class UserHandlers(object):
     cls._handler[user].handle(data)
 
 if __name__ == '__main__':
-  WebSocketServer(ChatService()).run(7000)
+  logfile = 'log.txt'
+  BackLog.load(logfile)
+  try:
+    WebSocketServer(ChatService()).run(7000)
+  finally:
+    BackLog.save(logfile)
